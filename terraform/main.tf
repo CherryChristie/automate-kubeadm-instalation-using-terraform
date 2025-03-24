@@ -190,6 +190,12 @@ resource "aws_security_group" "kubeadm_flannel" {
 }
 
 # Key Pairs
+# Generate a unique ID for the key name
+resource "random_id" "unique_key_name" {
+  byte_length = 8  # Length of the random string, adjust if necessary
+}
+
+# Generate the private key
 resource "tls_private_key" "kubeadm_private_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -199,8 +205,9 @@ resource "tls_private_key" "kubeadm_private_key" {
   }
 }
 
+# Create a new key pair using the dynamically generated name
 resource "aws_key_pair" "kubeadm_demo_keyp" {
-  key_name   = "gitopskey"
+  key_name   = "gitopskey-${random_id.unique_key_name.hex}"  # Use unique key name
   public_key = tls_private_key.kubeadm_private_key.public_key_openssh
   
   provisioner "local-exec" {
@@ -208,18 +215,18 @@ resource "aws_key_pair" "kubeadm_demo_keyp" {
   }
 }
 
-# Control Plane Instance
+# Example EC2 instance using the newly created key pair
 resource "aws_instance" "kubeadm_control_plane_instance" {
   ami                     = var.kubeadm_ami_id
   instance_type           = "t2.medium"
-  key_name               = aws_key_pair.kubeadm_demo_keyp.key_name
+  key_name                = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamically created key pair name
   associate_public_ip_address = true
-  security_groups        = [
+  security_groups         = [
     aws_security_group.kubeadm_control_plane.name,
     aws_security_group.kubeadm_security_group.name,
     aws_security_group.kubeadm_flannel.name
   ]
-
+  
   root_block_device {
     volume_size = 14
     volume_type = "gp2"
@@ -235,19 +242,18 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
   }
 }
 
-# Worker Instance
 resource "aws_instance" "kubeadm_worker_instance" {
   count = 2
   ami   = var.kubeadm_ami_id
   instance_type = "t2.micro"
-  key_name = aws_key_pair.kubeadm_demo_keyp.key_name
+  key_name     = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamically created key pair name
   associate_public_ip_address = true
   security_groups = [
     aws_security_group.kubeadm_worker_node.name,
     aws_security_group.kubeadm_security_group.name,
     aws_security_group.kubeadm_flannel.name
   ]
-
+  
   root_block_device {
     volume_size = 14
     volume_type = "gp2"
