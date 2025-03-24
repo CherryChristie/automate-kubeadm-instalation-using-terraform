@@ -10,6 +10,12 @@ terraform {
       version = "4.0.6"
     }
   }
+  backend "s3" {
+    bucket = "cloudcore0070"
+    key    = "terraform.tfstate"
+    region = "us-east-1"
+  }
+
 }
 
 provider "aws" {
@@ -66,6 +72,9 @@ resource "aws_route_table_association" "kubeadm_rt_association" {
 # Security Groups
 resource "aws_security_group" "kubeadm_security_group" {
   name = "kubeadm_security_group"
+  lifecycle {
+    create_before_destroy = true  # Ensures the resource is created before destroying the old one
+  }
   tags = {
     name = "kubeadm_security_group"
   }
@@ -104,6 +113,9 @@ resource "aws_security_group" "kubeadm_security_group" {
 
 resource "aws_security_group" "kubeadm_control_plane" {
   name = "kubeadm_control_plane"
+  lifecycle {
+    create_before_destroy = true  # Ensures the resource is created before destroying the old one
+  }
   tags = {
     name = "kubeadm_control_plane"
   }
@@ -151,6 +163,9 @@ resource "aws_security_group" "kubeadm_control_plane" {
 
 resource "aws_security_group" "kubeadm_worker_node" {
   name = "kubeadm_worker_node"
+  lifecycle {
+    create_before_destroy = true  # Ensures the resource is created before destroying the old one
+  }
 
   ingress {
     description = "kublet api"
@@ -171,7 +186,9 @@ resource "aws_security_group" "kubeadm_worker_node" {
 
 resource "aws_security_group" "kubeadm_flannel" {
   name = "kubeam_flannel"
-
+  lifecycle {
+    create_before_destroy = true  # Ensures the resource is created before destroying the old one
+  }
   ingress {
     description = "Master-worker"
     from_port    = 8285

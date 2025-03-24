@@ -33,7 +33,7 @@ jobs:
 
         - name: Terraform Init
           id: init
-          run: terraform init 
+          run: terraform init -backend-config "bucket=cloudcore0070"
 
         - name: Terraform Format
           id: fmt
