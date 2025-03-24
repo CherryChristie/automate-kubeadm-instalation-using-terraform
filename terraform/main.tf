@@ -95,9 +95,10 @@ resource "aws_security_group" "kubeadm_security_group" {
   }
 
   egress {
-    to_port       = 0
-    protocol      = "-1"
-    cidr_blocks   = ["0.0.0.0/0"] # Adjust if needed, remove prefix_list_ids
+    from_port   = 0   # Allow all outbound traffic
+    to_port     = 0   # Allow all outbound traffic
+    protocol    = "-1" # Allows all protocols
+    cidr_blocks = ["0.0.0.0/0"] # Allow traffic to any destination
   }
 }
 
