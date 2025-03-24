@@ -263,7 +263,7 @@ resource "aws_instance" "kubeadm_worker_instance" {
   count = 2
   ami   = var.kubeadm_ami_id
   instance_type = "t2.micro"
-  key_name     = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamically created key pair name
+  key_name     = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamicaly created key pair name
   associate_public_ip_address = true
   security_groups = [
     aws_security_group.kubeadm_worker_node.name,
