@@ -217,9 +217,7 @@ resource "tls_private_key" "kubeadm_private_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
   
-  provisioner "local-exec" {
-    command = "echo '${self.public_key_pem}' > ./pubkey.pem"
-  }
+
 }
 
 # Create a new key pair using the dynamically generated name
@@ -227,9 +225,7 @@ resource "aws_key_pair" "kubeadm_demo_keyp" {
   key_name   = "gitopskey-${random_id.unique_key_name.hex}"  # Use unique key name
   public_key = tls_private_key.kubeadm_private_key.public_key_openssh
   
-  provisioner "local-exec" {
-    command = "echo '${tls_private_key.kubeadm_private_key.private_key_pem}' > ./privkey.pem"
-  }
+
 }
 
 # Example EC2 instance using the newly created key pair
@@ -254,9 +250,6 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
     Name = "kubeadm_control_plane_instance"
   }
 
-  provisioner "local-exec" {
-    command = "echo 'master ${self.public_ip}' >> ./files/hosts"
-  }
 }
 
 resource "aws_instance" "kubeadm_worker_instance" {
@@ -282,7 +275,5 @@ resource "aws_instance" "kubeadm_worker_instance" {
     name = "kubeadm worker instance"
   }
 
-  provisioner "local-exec" {
-    command = "echo 'worker-$(count.index) ${self.public_ip}' >> ./files/hosts"
-  }
+
 }
