@@ -207,7 +207,7 @@ resource "tls_private_key" "kubeadm_private_key" {
 }
 
 resource "aws_key_pair"  "kubeadm_demo_keyp"{
-  key_name = var.kubeadm_key_name
+  key_name = "gitopskey"
   public_key = tls_private_key.kubeadm_private_key.public_key_openssh
   
   provisioner "local-exec" {
