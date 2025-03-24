@@ -224,9 +224,9 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
   key_name = aws_key_pair.kubeadm_demo_keyp.key_name
   associate_public_ip_address = true
   security_groups = [
-    aws_security_group.kubeadm_control_plane,
-    aws_aws_security_group.kubeadm_security_group,
-    aws_security_group.kubeadm_flannel
+    aws_security_group.kubeadm_control_plane.name,
+    aws_aws_security_group.kubeadm_security_group.name,
+    aws_security_group.kubeadm_flannel.name
   ]
 
   root_block_device {
@@ -250,9 +250,9 @@ resource "aws_instance" "kubeadm_worker_instance" {
     key_name = aws_key_pair.kubeadm_demo_keyp.key_name
     associate_public_ip_address = true
     security_groups = [
-    aws_security_group.kubeadm_worker_node,
-    aws_aws_security_group.kubeadm_security_group,
-    aws_security_group.kubeadm_flannel
+    aws_security_group.kubeadm_worker_node.name,
+    aws_aws_security_group.kubeadm_security_group.name,
+    aws_security_group.kubeadm_flannel.name
     ]
     root_block_device {
     volume_size = 14
