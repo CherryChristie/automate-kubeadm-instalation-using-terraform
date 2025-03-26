@@ -1,3 +1,13 @@
+#!/bin/bash
+# For Ubuntu 22.04
+
+set -e # Exit script immediately on first error.
+
+# Log all output to file
+exec >> /var/log/init-script.log 2>&1
+
+echo "Starting initialization script..."
+
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y apt-transport-https ca-certificates curl
 
