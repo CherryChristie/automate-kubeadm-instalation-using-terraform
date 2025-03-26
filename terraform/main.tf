@@ -272,7 +272,7 @@ resource "aws_instance" "kubeadm_worker_instance" {
   user_data = templatefile("./install-kubeadm-worker.sh", {})
 
   tags = {
-    name = "kubeadm worker instance"
+    Name = "kubeadm worker instance-$(count.index)"
   }
 
 
