@@ -187,7 +187,7 @@ resource "aws_security_group" "kubeadm_worker_node" {
 resource "aws_security_group" "kubeadm_flannel" {
   name = "kubeam_flannel"
   lifecycle {
-    create_before_destroy = true  # Ensures the resource is created before destroying the old one
+    create_before_destroy = true  # Ensures tthe resource is created before destroying the old one
   }
   ingress {
     description = "Master-worker"
