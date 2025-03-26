@@ -246,6 +246,7 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
   }
 
   user_data = templatefile("./install-kubeadm.sh", {})
+  user_data_replace_on_change = true
   tags = {
     Name = "kubeadm_control_plane_instance"
   }
@@ -270,6 +271,7 @@ resource "aws_instance" "kubeadm_worker_instance" {
   }
 
   user_data = templatefile("./install-kubeadm-worker.sh", {})
+  user_data_replace_on_change = true
 
   tags = {
     Name = "kubeadm worker instance-${count.index}"
