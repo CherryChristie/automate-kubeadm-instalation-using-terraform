@@ -245,7 +245,7 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
     volume_type = "gp2"
   }
 
-  user_data = "${file("install-kubeadm.sh")}"
+  user_data = filebase64("install-kubeadm.sh")
 
   tags = {
     Name = "kubeadm_control_plane_instance"
@@ -269,8 +269,8 @@ resource "aws_instance" "kubeadm_worker_instance" {
     volume_size = 14
     volume_type = "gp2"
   }
+  user_data = filebase64("install-kubeadm-worker.sh")
 
-  user_data = "${file("install-kubeadm-worker.sh")}"
 
 
   tags = {
