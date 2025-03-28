@@ -50,3 +50,6 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
 echo "Worker node initialization completed successfully!"
+# Add Kubernetes binaries to PATH for all users
+echo "export PATH=$PATH:/usr/bin" >> /etc/profile.d/k8s.sh
+chmod +x /etc/profile.d/k8s.sh

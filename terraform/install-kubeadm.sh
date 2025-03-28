@@ -66,3 +66,6 @@ echo "Worker join command: $JOIN_COMMAND" > /home/ubuntu/join-command.txt
 chown ubuntu:ubuntu /home/ubuntu/join-command.txt
 
 echo "Control plane initialization completed successfully!"
+# Add Kubernetes binaries to PATH for all users
+echo "export PATH=$PATH:/usr/bin" >> /etc/profile.d/k8s.sh
+chmod +x /etc/profile.d/k8s.sh
