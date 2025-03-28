@@ -47,8 +47,12 @@ sudo apt update
 sudo apt install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-# 7. INITIALIZE CLUSTER
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+# 7. INITIALIZE CLUSTER (CRITICAL FIX)
+PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+sudo kubeadm init \
+  --pod-network-cidr=192.168.0.0/16 \
+  --apiserver-advertise-address=$PRIVATE_IP \
+  --control-plane-endpoint=$PRIVATE_IP
 
 # 8. CONFIGURE KUBECONFIG
 mkdir -p $HOME/.kube

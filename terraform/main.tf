@@ -1,4 +1,3 @@
-# provider
 terraform {
   required_providers {
     aws = {
@@ -15,7 +14,6 @@ terraform {
     key    = "terraform.tfstate"
     region = "us-east-1"
   }
-
 }
 
 provider "aws" {
@@ -41,7 +39,7 @@ resource "aws_subnet" "kubeadm_subnet" {
   }
 }
 
-# Internet Gateway (IGW)
+# Internet Gateway
 resource "aws_internet_gateway" "kubeadm_igw" {
   vpc_id = aws_vpc.kubeadm_vpc.id
   tags = {
@@ -63,183 +61,150 @@ resource "aws_route_table" "kubeadm_route_table" {
   }
 }
 
-# Associate Route Table with Subnet
+# Route Table Association
 resource "aws_route_table_association" "kubeadm_rt_association" {
   subnet_id      = aws_subnet.kubeadm_subnet.id
   route_table_id = aws_route_table.kubeadm_route_table.id
 }
 
-# Security Groups
-resource "aws_security_group" "kubeadm_security_group" {
-  name = "kubeadm_security_group"
-  lifecycle {
-    create_before_destroy = true  # Ensures the resource is created before destroying the old one
-  }
-  tags = {
-    name = "kubeadm_security_group"
-  }
+# Base Security Group
+resource "aws_security_group" "kubeadm_base" {
+  name = "kubeadm_base"
+  description = "Base security group for all nodes"
+  vpc_id = aws_vpc.kubeadm_vpc.id
 
   ingress {
-    description = "Allow HTTPS"
-    from_port    = 443
-    to_port      = 443
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Allow HTTP"
-    from_port    = 80
-    to_port      = 80
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Allow SSH"
-    from_port    = 22
-    to_port      = 22
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0   # Allow all outbound traffic
-    to_port     = 0   # Allow all outbound traffic
-    protocol    = "-1" # Allows all protocols
-    cidr_blocks = ["0.0.0.0/0"] # Allow traffic to any destination
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "kubeadm_base"
   }
 }
 
+# Control Plane Security Group
 resource "aws_security_group" "kubeadm_control_plane" {
   name = "kubeadm_control_plane"
-  lifecycle {
-    create_before_destroy = true  # Ensures the resource is created before destroying the old one
-  }
-  tags = {
-    name = "kubeadm_control_plane"
-  }
+  description = "Control plane security group"
+  vpc_id = aws_vpc.kubeadm_vpc.id
 
+  # Kubernetes API
   ingress {
-    description = "Kubernetes Server"
-    from_port    = 6443
-    to_port      = 6443
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
+    description = "Kubernetes API"
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "Kubelet Api"
-    from_port    = 10250
-    to_port      = 10250
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "kube-scheduler"
-    from_port    = 10259
-    to_port      = 10259
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "kube-control-manager"
-    from_port    = 10257
-    to_port      = 10257
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
+  # etcd
   ingress {
     description = "etcd"
-    from_port    = 2379
-    to_port      = 2380
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
+    from_port   = 2379
+    to_port     = 2380
+    protocol    = "tcp"
+    self        = true
+  }
+
+  # Kubelet API
+  ingress {
+    description = "Kubelet API"
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    self        = true
+  }
+
+  # Flannel
+  ingress {
+    description = "Flannel"
+    from_port   = 8472
+    to_port     = 8472
+    protocol    = "udp"
+    self        = true
+  }
+
+  tags = {
+    Name = "kubeadm_control_plane"
   }
 }
 
-resource "aws_security_group" "kubeadm_worker_node" {
-  name = "kubeadm_worker_node"
-  lifecycle {
-    create_before_destroy = true  # Ensures the resource is created before destroying the old one
-  }
+# Worker Security Group
+resource "aws_security_group" "kubeadm_worker" {
+  name = "kubeadm_worker"
+  description = "Worker node security group"
+  vpc_id = aws_vpc.kubeadm_vpc.id
 
+  # Kubelet API
   ingress {
-    description = "kublet api"
-    from_port    = 10250
-    to_port      = 10250
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
+    description = "Kubelet API"
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    self        = true
   }
 
+  # NodePort Services
   ingress {
     description = "NodePort Services"
-    from_port    = 30000
-    to_port      = 32767
-    protocol     = "tcp"
-    cidr_blocks  = ["0.0.0.0/0"]
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Flannel
+  ingress {
+    description = "Flannel"
+    from_port   = 8472
+    to_port     = 8472
+    protocol    = "udp"
+    self        = true
+  }
+
+  tags = {
+    Name = "kubeadm_worker"
   }
 }
 
-resource "aws_security_group" "kubeadm_flannel" {
-  name = "kubeam_flannel"
-  lifecycle {
-    create_before_destroy = true  # Ensures tthe resource is created before destroying the old one
-  }
-  ingress {
-    description = "Master-worker"
-    from_port    = 8285
-    to_port      = 8285
-    protocol     = "udp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Master-worker"
-    from_port    = 8472
-    to_port      = 8472
-    protocol     = "udp"
-    cidr_blocks  = ["0.0.0.0/0"]
-  }
-}
-
-# Key Pairs
-# Generate a unique ID for the key name
+# Key Pair
 resource "random_id" "unique_key_name" {
-  byte_length = 8  # Length of the random string, adjust if necessary
+  byte_length = 8
 }
 
-# Generate the private key
 resource "tls_private_key" "kubeadm_private_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-  
-
 }
 
-# Create a new key pair using the dynamically generated name
 resource "aws_key_pair" "kubeadm_demo_keyp" {
-  key_name   = "gitopskey-${random_id.unique_key_name.hex}"  # Use unique key name
+  key_name   = "gitopskey-${random_id.unique_key_name.hex}"
   public_key = tls_private_key.kubeadm_private_key.public_key_openssh
-  
-
 }
 
-# Example EC2 instance using the newly created key pair
+# Control Plane Instance
 resource "aws_instance" "kubeadm_control_plane_instance" {
   ami                     = var.kubeadm_ami_id
   instance_type           = "t2.medium"
-  key_name                = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamically created key pair name
-  associate_public_ip_address = true
-  security_groups         = [
-    aws_security_group.kubeadm_control_plane.name,
-    aws_security_group.kubeadm_security_group.name,
-    aws_security_group.kubeadm_flannel.name
+  key_name                = aws_key_pair.kubeadm_demo_keyp.key_name
+  subnet_id               = aws_subnet.kubeadm_subnet.id
+  vpc_security_group_ids  = [
+    aws_security_group.kubeadm_base.id,
+    aws_security_group.kubeadm_control_plane.id
   ]
-  
+  associate_public_ip_address = true
+
   root_block_device {
     volume_size = 14
     volume_type = "gp2"
@@ -250,32 +215,43 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
   tags = {
     Name = "kubeadm_control_plane_instance"
   }
-
 }
 
+# Worker Instances
 resource "aws_instance" "kubeadm_worker_instance" {
   count = 2
   ami   = var.kubeadm_ami_id
   instance_type = "t2.micro"
-  key_name     = aws_key_pair.kubeadm_demo_keyp.key_name  # Use the dynamicaly created key pair name
-  associate_public_ip_address = true
-  security_groups = [
-    aws_security_group.kubeadm_worker_node.name,
-    aws_security_group.kubeadm_security_group.name,
-    aws_security_group.kubeadm_flannel.name
+  key_name     = aws_key_pair.kubeadm_demo_keyp.key_name
+  subnet_id    = aws_subnet.kubeadm_subnet.id
+  vpc_security_group_ids = [
+    aws_security_group.kubeadm_base.id,
+    aws_security_group.kubeadm_worker.id
   ]
-  
+  associate_public_ip_address = true
+
   root_block_device {
     volume_size = 14
     volume_type = "gp2"
   }
+
   user_data = filebase64("install-kubeadm-worker.sh")
 
-
-
   tags = {
-    Name = "kubeadm worker instance-${count.index}"
+    Name = "kubeadm_worker_instance-${count.index}"
   }
+}
 
+# Outputs
+output "control_plane_public_ip" {
+  value = aws_instance.kubeadm_control_plane_instance.public_ip
+}
 
+output "worker_public_ips" {
+  value = aws_instance.kubeadm_worker_instance[*].public_ip
+}
+
+output "ssh_private_key" {
+  value     = tls_private_key.kubeadm_private_key.private_key_openssh
+  sensitive = true
 }
