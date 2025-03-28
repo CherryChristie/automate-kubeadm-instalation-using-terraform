@@ -245,8 +245,8 @@ resource "aws_instance" "kubeadm_control_plane_instance" {
     volume_type = "gp2"
   }
 
-  user_data = templatefile("./install-kubeadm.sh", {})
-  user_data_replace_on_change = true
+  user_data = "${file("install-kubeadm.sh")}"
+
   tags = {
     Name = "kubeadm_control_plane_instance"
   }
@@ -270,8 +270,8 @@ resource "aws_instance" "kubeadm_worker_instance" {
     volume_type = "gp2"
   }
 
-  user_data = templatefile("./install-kubeadm-worker.sh", {})
-  user_data_replace_on_change = true
+  user_data = "${file("install-kubeadm-worker.sh")}"
+
 
   tags = {
     Name = "kubeadm worker instance-${count.index}"
